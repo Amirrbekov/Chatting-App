@@ -20,43 +20,25 @@ export interface User {
 export interface Channel {
     id: string
     createdAt: Date
-    updatedAt: Date
     name: string
-    description: string
-    users: User[]
-    owner: User
-    messages: Message[]
-}
-
-export interface Conversation {
-    id: string
-    createdAt: Date
-    updatedAt: Date
-    creator: User
-    recipient: User
-    messages: Message[]
+    members: User[]
+    createdBy: User
 }
 
 export interface Message {
     id: string
-    createdAt: Date
-    updatedAt: Date
-    text: string
-    author: {
-        id: string
-        username: string
-    }
-    channel: {
-        id: string
-        name: string
-    }
-    conversation: {
-        id: string
-    }
+    content: string
+    timestamp: Date
+    isRead: boolean
+    messageType: string
+    sender: User
+    receiver: User
 }
 
-export interface ProfileData {
-    username: string
-    email: string
-    avatarUrl: string
+export interface ChannelMessages {
+    id: string
+    content: string
+    timestamp: Date
+    sender: User
+    channel: Channel
 }

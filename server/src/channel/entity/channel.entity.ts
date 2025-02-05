@@ -11,7 +11,7 @@ export class Channel {
     @Column()
     name: string
 
-    @ManyToOne(() => User, (user) => user.id)
+    @ManyToOne(() => User, (user) => user.ownedChannels)
     createdBy: User;
 
     @Column({ default: () => 'CURRENT_TIMESTAMP' })

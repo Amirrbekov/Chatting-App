@@ -20,7 +20,7 @@ import { AccessStrategy, RefreshStrategy } from './strategies';
             imports: [ConfigModule],
             useFactory: async (configService: ConfigService) => ({
               secret: configService.get<string>('JwtSecretoOrKey'),
-              signOptions: { expiresIn: '15m' },
+              signOptions: { expiresIn: '10s' },
             }),
             inject: [ConfigService],
         }),

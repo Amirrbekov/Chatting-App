@@ -5,15 +5,16 @@ import Routes from './routes';
 import useAuthStore from './zustand/useAuthStore';
 
 import './styles/App.css';
-
+import { initializeSocket } from './lib/socket';
 
 const App = () => {
 
   const initializeUser = useAuthStore(state => state.initializeUser);
 
   useEffect(() => {
-    initializeUser();
-  }, [initializeUser]);
+      initializeUser();
+      initializeSocket();
+  }, [initializeUser, initializeSocket]);
 
   return (
     <Routes/>

@@ -1,28 +1,54 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Channel } from './entity/channel.entity';
 import { Repository } from 'typeorm';
 import { ChannelMessage } from 'src/channel/entity/channelMessage.entity';
 import { UserService } from 'src/user/user.service';
+import { User } from 'src/user/entity/user.entity';
 
 @Injectable()
 export class ChannelService {
     constructor(
         @InjectRepository(Channel) private readonly channelRepository: Repository<Channel>,
         @InjectRepository(ChannelMessage) private readonly channelMessageRepository: Repository<ChannelMessage>,
+        @InjectRepository(User) private readonly userRepository: Repository<User>,
         private readonly userService: UserService
     ) {}
 
-    async createChannel(name: string, createdById: string): Promise<Channel> {
-        const channel = this.channelRepository.create({
-            name,
-            createdBy: { id: createdById }
+    async getChannel(channelId: string): Promise<Channel> {
+        return this.channelRepository.findOne({
+          where: { id: channelId },
+          relations: ['members'],
         });
+    }
 
+    async createChannel(name: string, owner: User): Promise<Channel> {
+        const channel: Channel = new Channel()
+        channel.name = name;
+        channel.createdBy = owner;
+        channel.members = [owner];
+        
+
+        const savedChannel = await this.channelRepository.save(channel)
+
+        return await this.channelRepository.findOne({
+            where: { id: savedChannel.id },
+            relations: ['members', 'createdBy']
+        });
+    }
+
+    async updateChannel(channelId: string, name: string): Promise<Channel> {
+        const channel = await this.channelRepository.findOne({ where: { id: channelId } });
+        if (!channel) throw new Error('Channel not found');
+        channel.name = name;
         return this.channelRepository.save(channel);
     }
 
-    async addMember(channelId: string, userId: string){
+    async deleteChannel(channelId: string): Promise<void> {
+        await this.channelRepository.delete(channelId);
+    }
+
+    async addMember(channelId: string, userIds: string[]) {
         const channel = await this.channelRepository.findOne({
             where: { id: channelId },
             relations: ['members']
@@ -30,38 +56,29 @@ export class ChannelService {
 
         if(!channel) throw new Error('Channel not found');
 
-        const user = await this.userService.getUserByField('id', userId);
+        const existingUserIds = channel.members.map((member) => member.id);
+        const usersToAdd = await this.userRepository.findByIds(
+            userIds.filter((userId) => !existingUserIds.includes(userId))
+        );
 
-        if(!user) throw new Error('User not found');
-
-        const isUserInChannel = channel.members.some(channelUser => channelUser.id === userId);
-
-        if(isUserInChannel) {
-            return {
-                success: false,
-                message: 'User is already in channel'
-            }
+        if (usersToAdd.length === 0) {
+            throw new Error('All users are already in the channel');
         }
 
-        try {
-            await this.channelRepository
-            .createQueryBuilder()
-            .relation(Channel, 'members')
-            .of(channel)
-            .add(user)
-
-            return {
-                success: true,
-                message: 'User added to channel'
-            }
-        } catch (error) {
-            return {
-                success: false,
-                message: 'Failed to add user to channel',
-                error: error.message
-            };
-        }
+        channel.members = [...channel.members, ...usersToAdd];
+        return this.channelRepository.save(channel);
     }
+
+    async removeUsersFromChannel(channelId: string, userIds: string[]): Promise<Channel> {
+        const channel = await this.channelRepository.findOne({
+          where: { id: channelId },
+          relations: ['members'],
+        });
+        if (!channel) throw new Error('Channel not found');
+      
+        channel.members = channel.members.filter((member) => !userIds.includes(member.id));
+        return this.channelRepository.save(channel);
+      }
 
     async sendChannelMessage(channelId: string, senderId: string, content: string): Promise<ChannelMessage> {
         const channelMessage = this.channelMessageRepository.create({
@@ -75,7 +92,7 @@ export class ChannelService {
 
     async getUserChannels(userId: string): Promise<Channel[]> {
         const user = this.userService.getUserByField('id', userId);
-        if(user) throw new Error('User not found');
+        if(!user) throw new Error('User not found');
 
         const channels = this.channelRepository.find({
             relations: ["members"],
@@ -85,5 +102,25 @@ export class ChannelService {
         })
 
         return channels;
+    }
+
+    async findMessagesForChannel(channelId: string) {
+        const channel = await this.channelRepository.findOne({
+            where: { id: channelId },
+            relations: ['messages', 'members'],
+        });
+    
+        if (!channel) {
+            throw new NotFoundException(`Channel with ID ${channelId} not found`);
+        }
+    
+        const messages = await this.channelMessageRepository
+            .createQueryBuilder('channelMessage')
+            .leftJoinAndSelect('channelMessage.sender', 'sender')
+            .where('channelMessage.channel.id = :channelId', { channelId })
+            .orderBy('channelMessage.timestamp', 'ASC')
+            .getMany();
+    
+        return messages;
     }
 }

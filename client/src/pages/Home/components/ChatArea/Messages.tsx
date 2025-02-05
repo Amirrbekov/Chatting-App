@@ -1,24 +1,51 @@
-
+import { useEffect, useRef } from "react";
+import { ChannelMessages, Message } from "../../../../utils/types";
+import useAuthStore from "../../../../zustand/useAuthStore";
+import { getSocket } from "../../../../lib/socket";
+import useMessageStore from "../../../../zustand/useMessageStore";
 
 const Messages = () => {
+
+    const { user } = useAuthStore()
+    const { messages, setMessages } = useMessageStore();
+    const socket = getSocket();
+
+    useEffect(() => {
+        if (!socket) return;
+
+        socket.on('conversation:messages', (message: Message[]) => {
+            setMessages(message)
+        })
+    }, [socket, setMessages])
+
+    const messagesEndRef = useRef<HTMLDivElement>(null)
+
+    const scrollToBottom = () => {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+    }
+
+    useEffect(() => {
+        scrollToBottom()
+      }, [messages])
+
+    const formatTimestamp = (timestamp: Date) => {
+        return new Date(timestamp).toLocaleTimeString([], { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+        })
+    }
+
     return (
         <div className="messages">
-            <div className="message received">
-                <p>Hey, how are you?</p>
-                <span className="timestamp">10:00 AM</span>
-            </div>
-            <div className="message sent">
-                <p>I'm good, thanks! How about you?</p>
-                <span className="timestamp">10:05 AM</span>
-            </div>
-            <div className="message received">
-                <p>Do you want to grab lunch later?</p>
-                <span className="timestamp">10:10 AM</span>
-            </div>
-            <div className="message sent">
-                <p>Sure, let's meet at 12:30 PM.</p>
-                <span className="timestamp">10:15 AM</span>
-            </div>
+            {
+                messages.map(message => (
+                    <div key={message.id} className={`message ${message.sender.id === user?.id ? 'sent' : 'received'}`}>
+                        <p>{message.content}</p>
+                        <span className="timestamp">{formatTimestamp(message.timestamp)}</span>
+                    </div >
+                ))
+            }
+            <div ref={messagesEndRef} />
         </div>
     )
 }

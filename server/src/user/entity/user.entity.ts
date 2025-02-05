@@ -51,6 +51,9 @@ export class User {
   
     @ManyToMany(() => Channel, (channel) => channel.members)
     public channels: Channel[];
+
+    @OneToMany(() => Channel, (channel) => channel.createdBy)
+    ownedChannels: Channel[];
     
     @CreateDateColumn({
         type: 'timestamp',

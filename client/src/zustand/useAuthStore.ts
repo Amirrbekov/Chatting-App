@@ -6,7 +6,7 @@ import jwtDecode from 'jwt-decode';
 import { User } from '../utils/types';
 import { logout } from '../services/authService';
 import { getUser } from '../services/userService';
-import { disconnectSocket, initializeSocket } from '../lib/socket';
+import { disconnectSocket } from '../lib/socket';
 
 interface AuthState {
     user: User | null;
@@ -21,9 +21,9 @@ const useAuthStore = create<AuthState>()(
             user: null,
             setUser: (user: User | null) => set({ user }),
             logout: async () => {
-                disconnectSocket();
                 await logout()
                 localStorage.removeItem('access_token');
+                disconnectSocket();
                 set({ user: null });
             },
             initializeUser: async () => {
@@ -49,7 +49,6 @@ const useAuthStore = create<AuthState>()(
                           username: userData.username
                         }
                     });
-                    initializeSocket();
                 } catch(err) {
                     console.error('Failed to initialize user:', err);
                     localStorage.removeItem('access_token');

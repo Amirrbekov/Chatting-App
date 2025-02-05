@@ -1,35 +1,35 @@
-import { FaEllipsisV, FaPaperclip, FaPhone, FaSearch, FaSmile, FaVideo } from "react-icons/fa";
+import { FaComments, FaEllipsisV, FaPhone, FaSearch, FaVideo } from "react-icons/fa";
 import Messages from "./Messages";
-import { getSocket } from "../../../../lib/socket";
+import useChatStore from "../../../../zustand/useChatStore";
 import useUserStatusStore from "../../../../zustand/useUserStatusStore";
-import { useEffect } from "react";
-
+import MessageInput from "./MessageInput";
 
 const ChatArea = () => {
 
-    const { setOnlineUsers } = useUserStatusStore()
+    const { activeChat } = useChatStore();
+    const { onlineUsers } = useUserStatusStore();
 
-    const socket = getSocket();
+    if (!activeChat) {
+        return (
+          <div className="welcome-message">
+            <div className="welcome-content">
+              <FaComments className="welcome-icon" />
+              <h2>Welcome to Chatting App!</h2>
+              <p>Start a new chat or select an existing one to begin messaging.</p>
+            </div>
+          </div>
+        );
+    }
 
-    useEffect(() => {
-        socket.on('users:online', (users: string[]) => {
-            setOnlineUsers(users)
-        })
-
-        socket.emit('users:online')
-
-        return () => {
-            socket.off('users:online')
-        }
-    }, [socket])
-
+    const userStatus = onlineUsers.has(activeChat.id) ? 'Online' : 'Offline'
     return (
+        activeChat.username ?
         <div className="chat-area">
             <div className="chat-header">
-                <img src="/avatar.png" alt="John Doe" className="avatar" />
+                <img src="/avatar.png" alt={activeChat.username} className="avatar" />
                 <div className="chat-infoo">
-                    <h2>John Doe</h2>
-                    <p className="status">Online</p>
+                    <h2>{activeChat.username}</h2>
+                    <p>{userStatus}</p>
                 </div>
                 <div className="chat-actions">
                     <button className="action-button">
@@ -46,18 +46,30 @@ const ChatArea = () => {
                     </button>
                 </div>
             </div>
-            <Messages/>
-            <div className="message-input">
-                <button className="file-button">
-                    <FaPaperclip />
-                </button>
-                <input type="text" placeholder="Type a message..." />
-                <button className="emoji-button">
-                    <FaSmile />
-                </button>
-                <button className="send-button">Send</button>
+            <Messages />
+            <MessageInput/>
+        </div>     
+        
+        :
+
+        <div className="chat-area">
+            <div className="chat-header">
+                <img src="/avatar.png" alt={activeChat.name} className="avatar" />
+                <div className="chat-infoo">
+                    <h2>{activeChat.name}</h2>
+                </div>
+                <div className="chat-actions">
+                    <button className="action-button">
+                        <FaSearch />
+                    </button>
+                    <button className="action-button">
+                        <FaEllipsisV />
+                    </button>
+                </div>
             </div>
-        </div>
+            <Messages />
+            <MessageInput/>
+        </div> 
     )
 }
 

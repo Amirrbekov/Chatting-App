@@ -1,5 +1,6 @@
 import axios from "axios";
 import { API_BASE_URL } from "./constants";
+import { initializeSocket } from "../lib/socket";
 
 const axiosApi = axios.create({
     baseURL: API_BASE_URL,
@@ -22,8 +23,8 @@ axiosApi.interceptors.response.use(
     response => response,
     async (error) => {
       const originalRequest = error.config;
-  
-      if(error.response?.status === 401 && !originalRequest._retry && !originalRequest.url.includes('/auth/login')) {
+      
+      if(error.response?.status === 401 && !originalRequest._retry) {
         originalRequest._retry = true;
   
         try {

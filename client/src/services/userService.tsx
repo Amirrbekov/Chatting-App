@@ -2,8 +2,8 @@ import axiosApi from "../utils/axiosApi";
 import { User } from "../utils/types";
 
 export const getUsers = async (): Promise<User[]> => {
-    const response = await axiosApi.get(`/user`);    
-    return response.data.users;
+    const response = await axiosApi.get(`/user`);
+    return response.data;
 }
 
 export const getUser = async (id: string) => {

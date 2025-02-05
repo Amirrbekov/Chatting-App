@@ -258,6 +258,39 @@
     color: #007bff;
 }
 
+.welcome-message {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+  }
+  
+  .welcome-content {
+    text-align: center;
+    color: #fff;
+    max-width: 400px;
+  }
+  
+  .welcome-icon {
+    font-size: 4rem;
+    color: #007bff;
+    margin-bottom: 1rem;
+  }
+  
+  .welcome-content h2 {
+    margin: 0;
+    font-size: 1.75rem;
+    font-weight: 500;
+    color: #fff;
+  }
+  
+  .welcome-content p {
+    margin: 1rem 0;
+    font-size: 1rem;
+    color: #c0b4b4;
+  }
+
 .chat-header {
     display: flex;
     justify-content: space-between;

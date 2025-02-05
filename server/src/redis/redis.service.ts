@@ -4,6 +4,8 @@ import Redis from 'ioredis';
 @Injectable()
 export class RedisService {
     private readonly redis: Redis;
+    private readonly USER_STATUS_PREFIX = 'user_status:';
+    private readonly USER_SOCKET_PREFIX = 'user_socket:';
 
     constructor() {
         this.redis = new Redis();
@@ -48,28 +50,28 @@ export class RedisService {
 
 
     async setUserOnline(userId: string, socketId: string): Promise<void> {
-      await this.set(`user_status:${userId}`, 'online');
-      await this.set(`user_socket:${userId}`, socketId);
+      await this.set(`${this.USER_STATUS_PREFIX}${userId}`, 'online');
+      await this.set(`${this.USER_SOCKET_PREFIX}${userId}`, socketId);
     }
 
     async setUserOffline(userId: string): Promise<void> {
-      await this.set(`user_status:${userId}`, 'offline');
-      await this.del(`user_socket:${userId}`);
+      await this.set(`${this.USER_STATUS_PREFIX}${userId}`, 'offline');
+      await this.del(`${this.USER_SOCKET_PREFIX}${userId}`);
     }
 
     async getUserStatus(userId: string): Promise<string> {
-      const status = await this.get(`user_status:${userId}`);
+      const status = await this.get(`${this.USER_STATUS_PREFIX}${userId}`);
       return status || 'offline';
     }
 
     async getAllOnlineUsers(): Promise<string[]> {
-      const keys = await this.redis.keys(`user_status:*`);
+      const keys = await this.redis.keys(`${this.USER_STATUS_PREFIX}*`);
       const onlineUsers: string[] = [];
       
       for (const key of keys) {
           const status = await this.get(key);
           if (status === 'online') {
-              const userId = key.replace('user_status:', '')
+              const userId = key.replace(this.USER_STATUS_PREFIX, '')
               onlineUsers.push(userId);
           }
       }

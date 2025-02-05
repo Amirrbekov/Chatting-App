@@ -3,9 +3,11 @@ import { FaArrowLeft, FaSave, FaTimes } from "react-icons/fa";
 
 import '../../styles/Profile.css'
 import { useNavigate } from "react-router-dom";
+import useAuthStore from "../../zustand/useAuthStore";
 
 
 const Profile = () => {
+    const { user } = useAuthStore();
     const [avatar, setAvatar] = useState('/avatar.png');
     const [email, setEmail] = useState('user@example.com');
     const [username, setUsername] = useState('user123');
@@ -65,7 +67,7 @@ const Profile = () => {
                     <label>Email</label>
                     <input
                         type="email"
-                        value={email}
+                        value={user?.email}
                         onChange={(e) => setEmail(e.target.value)}
                     />
                 </div>
@@ -73,7 +75,7 @@ const Profile = () => {
                     <label>Username</label>
                     <input
                         type="text"
-                        value={username}
+                        value={user?.username}
                         onChange={(e) => setUsername(e.target.value)}
                     />
                 </div>
