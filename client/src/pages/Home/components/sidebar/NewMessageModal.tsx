@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import '../../../../styles/MessageListModal.css'
 import { getUsers } from '../../../../services/userService';
 import { User } from '../../../../utils/types';
+import useAuthStore from '../../../../zustand/useAuthStore';
 
 interface UserListModalProps {
   isOpen: boolean;
@@ -11,8 +12,14 @@ interface UserListModalProps {
 
 const UserListModal: React.FC<UserListModalProps> = ({ isOpen, onClose, onUserSelect }) => {
 
+  const { user } = useAuthStore();
   const [users, setUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+
+  const filteredUsers = users.filter((userR) =>
+    userR.username.toLowerCase().includes(searchTerm.toLowerCase()) && 
+  userR.id !== user?.id 
+  );
 
   useEffect(() => {
     if (isOpen) {
@@ -27,10 +34,6 @@ const UserListModal: React.FC<UserListModalProps> = ({ isOpen, onClose, onUserSe
       fetchUsers();
     }
   }, [isOpen]);
-
-  const filteredUsers = users.filter((user) =>
-    user.username.toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
   if (!isOpen) return null;
 

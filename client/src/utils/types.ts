@@ -14,6 +14,7 @@ export interface User {
     id: string
     createdAt: string
     email: string
+    avatarUrl: string | null
     username: string
 }
 

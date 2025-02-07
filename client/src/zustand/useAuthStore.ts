@@ -46,7 +46,8 @@ const useAuthStore = create<AuthState>()(
                           id: sub,
                           email,
                           createdAt: Date.now().toString(),
-                          username: userData.username
+                          username: userData.username,
+                          avatarUrl: userData.avatarUrl
                         }
                     });
                 } catch(err) {

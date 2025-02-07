@@ -307,6 +307,58 @@
     font-weight: 500;
 }
 
+.header-actions {
+    position: relative;
+  }
+  
+.chat-actions {
+    position: relative;
+}
+
+.dropdown-menu {
+    position: absolute;
+    right: 0;
+    top: 100%; /* Position below the action button */
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    z-index: 100;
+    min-width: 180px;
+    overflow: hidden;
+}
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    width: 100%;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #333;
+    font-size: 0.9rem;
+    transition: background-color 0.3s ease;
+}
+
+.dropdown-item:hover {
+    background-color: #f5f5f5;
+}
+
+.dropdown-item svg {
+    font-size: 1rem;
+    color: #666;
+}
+
+.members-label {
+    margin: 0;
+    font-size: 0.75rem; /* Very small label */
+    color: #aaa; /* Light gray for headings */
+    font-weight: 500;
+}
+
+
 .messages {
     flex: 1;
     padding: 1rem;

@@ -21,15 +21,19 @@ const ChatList: React.FC<ChatListProps> = ({ onChatSelect }) => {
     }, [fetchChannels, fetchMessages])
 
     const uniqueConversations = messages.reduce((acc, message) => {
-        const otherUser = message.sender.id === user?.id ? message.receiver : message.sender;
+        if (message.sender.id === message.receiver.id) {
+            return acc;
+        }
+        const otherUser = message.sender.id === user?.id 
+        ? message.receiver 
+        : message.sender;
         
-        if (!acc[otherUser.id]) {
+        if (!acc[otherUser.id] || 
+            new Date(message.timestamp) > new Date(acc[otherUser.id].lastMessage.timestamp)) {
           acc[otherUser.id] = {
             lastMessage: message,
             otherUser
           };
-        } else if (new Date(message.timestamp) > new Date(acc[otherUser.id].lastMessage.timestamp)) {
-          acc[otherUser.id].lastMessage = message;
         }
         
         return acc;
@@ -53,14 +57,24 @@ const ChatList: React.FC<ChatListProps> = ({ onChatSelect }) => {
             <div className="chat-list">
                 {Object.values(uniqueConversations).map(({ lastMessage, otherUser }) => {
                     const userStatus = onlineUsers.has(otherUser.id) ? 'online' : 'offline';
-                    
+                    console.log(lastMessage)
                     return (
                         <div 
                             key={otherUser.id} 
-                            onClick={() => onChatSelect(lastMessage)} 
+                            onClick={() => {
+                                const chat = {
+                                    sender: user,
+                                    receiver: otherUser,
+                                };
+                                onChatSelect(chat);
+                            }} 
                             className="chat-item active"
                         >
-                                <img src="/avatar.png" alt={`${otherUser.username}`} className="avatar" />
+                            <img 
+                                src={otherUser.avatarUrl || '/avatar.png'} 
+                                alt={user?.username} 
+                                className="avatar" 
+                            />
                             <div className="chat-info">
                                 <h3>{otherUser.username}</h3>
                                 <p>{lastMessage.content}</p>

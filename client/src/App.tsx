@@ -1,10 +1,8 @@
 import { useEffect } from 'react';
-
 import Routes from './routes';
 
-import useAuthStore from './zustand/useAuthStore';
-
 import './styles/App.css';
+import useAuthStore from './zustand/useAuthStore';
 import { initializeSocket } from './lib/socket';
 
 const App = () => {

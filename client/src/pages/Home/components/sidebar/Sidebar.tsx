@@ -3,11 +3,12 @@ import ChatList from "./ChatList";
 import Footer from "./Footer";
 import { FaPlus, FaUsers } from "react-icons/fa";
 import { ChannelModal } from "./CreateChannelModal";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { getSocket } from "../../../../lib/socket";
 import useChatStore from "../../../../zustand/useChatStore";
 import UserListModal from "./NewMessageModal";
 import { User } from "../../../../utils/types";
+import useAuthStore from "../../../../zustand/useAuthStore";
 
 
 interface SidebarProps {
@@ -22,6 +23,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onChatSelect }) => {
         fetchChannels,
     } = useChatStore();
 
+    const { user } = useAuthStore();
     const [isUserListOpen, setIsUserListOpen] = useState(false);
     const [isCreateChannelOpen, setIsCreateChannelOpen] = useState(false)
 
@@ -39,17 +41,18 @@ const Sidebar: React.FC<SidebarProps> = ({ onChatSelect }) => {
         setIsCreateChannelOpen(false)
     }
 
-    const handleUserSelect = async (user: User) => {
+    const handleUserSelect = async (userR: User) => {
         const existingConversation = messages.find(
-            (conv) => conv.receiver.id === user.id && conv.sender.id === user.id
+            (conv) => conv.receiver.id === userR.id && conv.sender.id === userR.id
         );
 
         if (existingConversation) {
             setActiveChat(existingConversation);
         } else {
             const tempChat = {
-                id: `temp-${user.id}`,
-                name: user.username,
+                id: user?.id,
+                receiver: userR,
+                username: user?.username,
                 messages: [],
             };
             setActiveChat(tempChat);

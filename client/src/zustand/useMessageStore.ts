@@ -10,7 +10,7 @@ interface MessageState {
     setChannelMessages: (channelMessages: ChannelMessages[]) => void
 
     addMessage: (message: Message) => void;
-    addChannelMessages: (channelMessage: ChannelMessages) => void
+    addChannelMessage: (channelMessage: ChannelMessages) => void
 
     clearMessages: () => void;
 }
@@ -25,7 +25,7 @@ const useMessageStore = create<MessageState>((set) => ({
     addMessage: (message) => set((state) => ({ 
       messages: [...state.messages, message] 
     })),
-    addChannelMessages: (channelMessage) => set((state) => ({ 
+    addChannelMessage: (channelMessage) => set((state) => ({ 
         channelMessages: [...state.channelMessages, channelMessage] 
     })),
     

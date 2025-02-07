@@ -1,46 +1,34 @@
 import { FaPaperclip, FaSmile } from "react-icons/fa"
 import useChatStore from "../../../../zustand/useChatStore"
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { getSocket } from "../../../../lib/socket";
-import useMessageStore from "../../../../zustand/useMessageStore";
-import { Message } from "../../../../utils/types";
-
+import useAuthStore from "../../../../zustand/useAuthStore";
 
 const MessageInput = () => {
 
     const socket = getSocket();
+    const { user } = useAuthStore();
     const { activeChat } = useChatStore();
-    const { addMessage } = useMessageStore();
+   
     const [newMessage, setNewMessage] = useState('')
-
-    useEffect(() => {
-        if (!socket) return;
-    
-        const handleNewMessage = (message: Message) => {
-            console.log("Helo", message)
-            addMessage(message)
-        };
-    
-        socket.on('receiveMessage', handleNewMessage);
-    
-        return () => {
-            socket.off('receiveMessage', handleNewMessage);
-        };
-    }, [socket, addMessage]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
         if (!newMessage.trim() || !socket) return
 
-        try {
+        if(activeChat.receiver) {
             socket.emit('sendMessage', {
-                receiverId: activeChat.receiver.id,
+                receiverId: activeChat.receiver.id === user?.id ? activeChat.sender.id : activeChat.receiver.id,
                 content: newMessage
             })
-            setNewMessage('')
-        } catch (error) {
-            console.error('Error sending message:', error)
+        } else {
+            socket.emit('sendMessageChannel', {
+                channelId: activeChat.id,
+                content: newMessage
+            })
         }
+
+        setNewMessage('')
     }
 
     return (
