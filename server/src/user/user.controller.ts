@@ -1,7 +1,8 @@
-import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { UserService } from './user.service';
 import { RegisterDto } from './dto/register.dto';
 import { UpdateUserDto } from './dto/updateUser.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('user')
 export class UserController {
@@ -32,5 +33,19 @@ export class UserController {
     @Delete(':id')
     remove(@Param('id') id: string) {
       return this.userService.remove(id);
+    }
+
+    @Post(':id/avatar')
+    @UseInterceptors(FileInterceptor('file'))
+    async uploadAvatar(
+        @Param('id') userId: string,
+        @UploadedFile() file: Express.Multer.File,
+    ) {
+        return this.userService.uploadAvatar(userId, file);
+    }
+
+    @Delete(':id/avatar')
+    async deleteAvatar(@Param('id') userId: string) {
+        return this.userService.deleteAvatar(userId);
     }
 }

@@ -1,23 +1,24 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ServeStaticModule } from '@nestjs/serve-static';
 import { UserModule } from './user/user.module';
-import { AuthController } from './auth/auth.controller';
-import { AuthService } from './auth/auth.service';
 import { AuthModule } from './auth/auth.module';
 import { RedisModule } from './redis/redis.module';
-import { MessageController } from './message/message.controller';
-import { MessageService } from './message/message.service';
 import { MessageModule } from './message/message.module';
-import { ChannelController } from './channel/channel.controller';
 import { ChannelModule } from './channel/channel.module';
-import { ChannelService } from './channel/channel.service';
+import { join } from 'path';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
+    }),
+
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', '..', 'uploads', 'avatars'),
+      serveRoot: '/avatars',
     }),
 
     TypeOrmModule.forRoot({

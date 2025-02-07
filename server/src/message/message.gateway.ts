@@ -36,6 +36,8 @@ export class MessageGateway implements OnGatewayConnection, OnGatewayDisconnect 
     try {
       const user = await this.messageService.getUserFromSocket(client);
       client.user = user;
+
+      client.join(client.user.id);
   
       await this.redisService.setUserOnline(user.id, client.id)
       this.server.emit('user:status', { userId: user.id, status: 'online' });
@@ -73,14 +75,14 @@ export class MessageGateway implements OnGatewayConnection, OnGatewayDisconnect 
   @SubscribeMessage('channel:create')
   public async onChannelCreate(
       @ConnectedSocket() socket: UserSocket,
-      @MessageBody() data: { name: string}
+      @MessageBody() data: { name: string }
   ) {
       try {
         if (!data.name) {
             throw new WsException('Channel name is required');
         }
         const createdChannel = await this.channelService.createChannel(data.name, socket.user)
-        socket.join(createdChannel.id.toString())
+        socket.join(createdChannel.id)
         for (const user of createdChannel.members) {
             const channels = await this.channelService.getUserChannels(user.id)
             this.server.to(socket.id).emit('channel:all', channels)
@@ -92,24 +94,32 @@ export class MessageGateway implements OnGatewayConnection, OnGatewayDisconnect 
       }
   }
 
-  @SubscribeMessage('sendMessage')
-  async handleMessage(
-    @MessageBody() data: { receiverId: string; content: string },
-    @ConnectedSocket() client: UserSocket,
+  @SubscribeMessage('channel:delete')
+  public async onChannelDelete(
+      @ConnectedSocket() socket: UserSocket,
+      @MessageBody() data: { channelId: string }
   ) {
-    const { receiverId, content } = data;
-    const message = await this.messageService.sendMessage(client.user.id, receiverId, content);
-
-    console.log(message)
-    this.server.to(client.user.id).emit('receiveMessage', message);
-    this.server.to(receiverId).emit('receiveMessage', message);
+      try {
+        const channel = await this.channelService.getChannel(data.channelId)
+        if(socket.user.id !== channel.createdBy.id) {
+          console.log(data.channelId)
+          throw new Error("You are not owner of this channel")
+        }
+        console.log(data.channelId)
+        await this.channelService.deleteChannel(data.channelId)
+        console.log(data.channelId)
+        const channels = await this.channelService.getUserChannels(socket.user.id)
+        this.server.to(socket.id).emit('channel:all', channels)
+      } catch (err) {
+          this.server.to(socket.id).emit('error:channel-create', err)
+          throw new WsException(err)
+      }
   }
-
 
   @SubscribeMessage('channel:join')
   public async onChannelJoin(
-      @ConnectedSocket() socket: UserSocket,
-      @MessageBody() data: { channelId: string }
+    @ConnectedSocket() socket: UserSocket,
+    @MessageBody() data: { channelId: string }
   ) {
       try {
           const { channelId } = data
@@ -119,6 +129,80 @@ export class MessageGateway implements OnGatewayConnection, OnGatewayDisconnect 
       } catch (err) {
           throw new WsException(err)
       }
+  }
+
+  @SubscribeMessage('sendMessageChannel')
+  async handleMessageChannel(
+    @MessageBody() data: { channelId: string; content: string },
+    @ConnectedSocket() client: UserSocket,
+  ) {
+    const { channelId, content } = data;
+    const message = await this.channelService.sendChannelMessage(channelId, client.user.id, content);
+
+    this.server.to(channelId).emit('receiveChannelMessage', message);
+  }
+
+  @SubscribeMessage('addMemberToChannel')
+  async handleAddMemberToChannel(
+      @MessageBody() data: { channelId: string; userIds: string[] },
+      @ConnectedSocket() client: UserSocket,
+  ) {
+      const { channelId, userIds } = data;
+  
+      try {
+          const updatedChannel = await this.channelService.addMember(channelId, userIds);
+  
+          // Notify all members of the channel about the update
+          this.server.to(channelId).emit('memberAdded', {
+              channelId,
+              members: updatedChannel.members.map((member) => ({
+                  id: member.id,
+                  username: member.username,
+              })),
+          });
+  
+          console.log(`Added ${userIds.length} users to channel ${channelId}`);
+      } catch (error) {
+        console.error('Error adding members to channel:', error.message);
+        client.emit('error', { message: error.message });
+      }
+  }
+
+  @SubscribeMessage('removeMemberToChannel')
+  async handleRemoveMemberToChannel(
+      @MessageBody() data: { channelId: string; userId: string },
+      @ConnectedSocket() client: UserSocket,
+  ) {
+      const { channelId, userId } = data;
+  
+      try {
+          const updatedChannel = await this.channelService.removeUsersFromChannel(channelId, userId);
+
+          this.server.to(channelId).emit('memberRemoved', {
+              channelId,
+              members: updatedChannel.members.map((member) => ({
+                  id: member.id,
+                  username: member.username,
+              })),
+          });
+  
+          console.log(`Removed ${userId.length} users to channel ${channelId}`);
+      } catch (error) {
+        console.error('Error removing members to channel:', error.message);
+        client.emit('error', { message: error.message });
+      }
+  }
+
+  @SubscribeMessage('sendMessage')
+  async handleMessage(
+    @MessageBody() data: { receiverId: string; content: string },
+    @ConnectedSocket() client: UserSocket,
+  ) {
+    const { receiverId, content } = data;
+    const message = await this.messageService.sendMessage(client.user.id, receiverId, content);
+
+    client.emit('receiveMessage', message);
+    this.server.to(receiverId).emit('receiveMessage', message);
   }
 
   @SubscribeMessage('conversation:join')

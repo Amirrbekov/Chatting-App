@@ -18,7 +18,7 @@ export class ChannelService {
     async getChannel(channelId: string): Promise<Channel> {
         return this.channelRepository.findOne({
           where: { id: channelId },
-          relations: ['members'],
+          relations: ['members', 'createdBy'],
         });
     }
 
@@ -51,32 +51,42 @@ export class ChannelService {
     async addMember(channelId: string, userIds: string[]) {
         const channel = await this.channelRepository.findOne({
             where: { id: channelId },
-            relations: ['members']
+            relations: ['members', 'createdBy']
         });
 
         if(!channel) throw new Error('Channel not found');
 
         const existingUserIds = channel.members.map((member) => member.id);
-        const usersToAdd = await this.userRepository.findByIds(
-            userIds.filter((userId) => !existingUserIds.includes(userId))
-        );
+        const uniqueUserIds = userIds.filter((userId) => !existingUserIds.includes(userId));
+
+        if (uniqueUserIds.length === 0) {
+            throw new Error('All users are already in the channel');
+        }
+
+        const usersToAdd = await this.userRepository
+            .createQueryBuilder('user')
+            .where('user.id IN (:...ids)', { ids: uniqueUserIds })
+            .getMany();
 
         if (usersToAdd.length === 0) {
             throw new Error('All users are already in the channel');
         }
 
         channel.members = [...channel.members, ...usersToAdd];
-        return this.channelRepository.save(channel);
+
+        const updatedChannel = await this.channelRepository.save(channel);
+    
+        return updatedChannel;
     }
 
-    async removeUsersFromChannel(channelId: string, userIds: string[]): Promise<Channel> {
+    async removeUsersFromChannel(channelId: string, userId: string): Promise<Channel> {
         const channel = await this.channelRepository.findOne({
           where: { id: channelId },
-          relations: ['members'],
+          relations: ['members', 'createdBy'],
         });
         if (!channel) throw new Error('Channel not found');
       
-        channel.members = channel.members.filter((member) => !userIds.includes(member.id));
+        channel.members = channel.members.filter((member) => !userId.includes(member.id));
         return this.channelRepository.save(channel);
       }
 
@@ -95,7 +105,7 @@ export class ChannelService {
         if(!user) throw new Error('User not found');
 
         const channels = this.channelRepository.find({
-            relations: ["members"],
+            relations: ["members", 'createdBy'],
             where: { members: {
                 id: userId
             } }

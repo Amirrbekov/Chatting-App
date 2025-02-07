@@ -95,6 +95,7 @@ export class MessageService {
           sender: { id: senderId },
           receiver: { id: receiverId },
           content,
+          timestamp: new Date(),
         });
         return this.messageRepository.save(message);
     }
@@ -124,4 +125,4 @@ export class MessageService {
         return messages;
     }
 }
-// create conversation, message, profile, file attach
+// profile, file attach, channel members show and remove, emoji, fix last message, call, video call

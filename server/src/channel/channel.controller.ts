@@ -51,8 +51,8 @@ export class ChannelController {
     @Delete(':id/users')
     async removeUsersFromChannel(
         @Param('id') channelId: string,
-        @Body('userIds') userIds: string[]
+        @Body('userIds') userId: string
     ) {
-        return this.channelService.removeUsersFromChannel(channelId, userIds);
+        return this.channelService.removeUsersFromChannel(channelId, userId);
     }
 }
