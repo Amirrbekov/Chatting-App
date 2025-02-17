@@ -57,7 +57,6 @@ const ChatList: React.FC<ChatListProps> = ({ onChatSelect }) => {
             <div className="chat-list">
                 {Object.values(uniqueConversations).map(({ lastMessage, otherUser }) => {
                     const userStatus = onlineUsers.has(otherUser.id) ? 'online' : 'offline';
-                    console.log(lastMessage)
                     return (
                         <div 
                             key={otherUser.id} 

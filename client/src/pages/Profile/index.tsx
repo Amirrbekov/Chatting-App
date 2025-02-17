@@ -22,6 +22,8 @@ const Profile = () => {
       
         const formData = new FormData();
         formData.append("file", file);
+
+        console.log(formData)
       
         try {
           const response = await axiosApi.post(`/user/${user.id}/avatar`, formData, {
@@ -32,6 +34,8 @@ const Profile = () => {
             ...user,
             avatarUrl: response.data.avatarUrl,
           });
+
+
       
           setAvatar(`${response.data.avatarUrl}?t=${Date.now()}`);
         } catch (error) {
@@ -50,7 +54,7 @@ const Profile = () => {
             console.error('Error deleting avatar:', error);
         }
     };
-
+    console.log(user?.avatarUrl)
     return (
         <div className="profile-container">
             <button className="back-button" onClick={() => navigate(-1)}>
@@ -62,7 +66,7 @@ const Profile = () => {
     
             <div className="avatar-section">
             <img 
-                src={`${avatar}?t=${Date.now()}`} 
+                src={`${avatar}`} 
                 alt={`${user?.username}'s avatar`}
                 className="profile-avatar" 
             />
